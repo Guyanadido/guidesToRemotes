@@ -77,10 +77,11 @@ router.patch('/blog/:id', auth, async (req, res) => {
 //delete a blog
 router.delete('/blog/:id', auth, async (req, res) => {
     try {
-        const blog = await Blog.findOneAndDelete({ _id: req.params.id, guide: req.user._id })
+        const blog = await Blog.findOne({ _id: req.params.id, guide: req.user._id })
         if (!blog) {
             return res.status(404).send({ 'errror': 'not found' })
         }
+        await blog.deleteOne()
         res.send(blog)
     } catch (e) {
         res.status(400).send()

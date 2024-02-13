@@ -1,5 +1,4 @@
 const express = require('express')
-const mongoose = require('mongoose')
 const router = new express.Router()
 
 const Blog = require('../../models/blog_related/blog')
@@ -16,12 +15,13 @@ router.patch('/Like/:id', auth, async (req, res) => {
 
         const islikeExist = await Like.findOne({likee: req.user._id, blog: req.params.id})
         if (islikeExist) {
-            return res.status(401).send()
+            return res.status(401).send({'error':'already liked'})
         } 
 
         const newLike = new Like({likee: req.user._id, blog: req.params.id})
-        await newLike.save()
         blog.likes = blog.likes + 1
+        await newLike.save()
+        await blog.save()
         const totalLikes = blog.likes
         res.send({totalLikes, newLike})
     } catch (e) {
@@ -43,6 +43,7 @@ router.delete('/Like/:id', auth, async(req, res) => {
         }
 
         blog.likes = blog.likes - 1
+        await blog.save()
         const totalLikes = blog.likes
         res.send({totalLikes, like})
     } catch (e) {

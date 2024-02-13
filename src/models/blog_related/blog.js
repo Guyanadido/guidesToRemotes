@@ -1,5 +1,7 @@
 const mongoose = require('mongoose')
 
+const Like = require('../blog_related/like')
+
 const blogSchema = mongoose.Schema({
     guide: {
         type: mongoose.Schema.Types.ObjectId,
@@ -69,6 +71,13 @@ blogSchema.pre('save', async function(next) {
         catagory = await new mongoose.Types.ObjectId(catagory)
         return catagory
     }))
+
+    next()
+})
+
+blogSchema.pre('remove', async function(next) {
+    const blog = this
+    await Like.deleteMany({likee: blog._id})
 
     next()
 })
