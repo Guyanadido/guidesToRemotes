@@ -1,6 +1,7 @@
 const mongoose = require('mongoose')
 
 const Like = require('../blog_related/like')
+const Comment = require('../blog_related/comment')
 
 const blogSchema = mongoose.Schema({
     guide: {
@@ -78,7 +79,7 @@ blogSchema.pre('save', async function(next) {
 blogSchema.pre('remove', async function(next) {
     const blog = this
     await Like.deleteMany({likee: blog._id})
-
+    await Comment.deleteMany({blog: blog._id})
     next()
 })
 

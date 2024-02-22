@@ -4,14 +4,22 @@ const guideSchema = mongoose.Schema({
     user: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
+        unique: true,
         ref: 'user'
     },
-    expertInTourTypes: [{
-        tourTypes: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'tourTypes'
-        }
-    }],
+    about: {
+        type: String,
+        trim: true,
+        required:true
+    },
+    expertInTourTypes: {
+        type: [{type: mongoose.Schema.Types.ObjectId, ref: 'tourTypes'}],
+        required: true,
+    },
+    placesToGuide: {
+        type: [String],
+        required: true
+    },
     availability: [{
         available: {
             startDate: {
@@ -25,13 +33,27 @@ const guideSchema = mongoose.Schema({
             }
         }
     }],
+    introVideo: {
+        type: Buffer
+    },
     gallery: [{
-        image: {
+        item: {
             type: Buffer
         }
     }]
 }, {
     timestamps: true
+})
+
+guideSchema.path('gallery').validate(async function(value) {
+    if(value.lenth > 10) {
+        throw new Error('gallery cannot have more than 10 items')
+    }
+})
+
+guideSchema.pre('save', async function(next) {
+    this.placesToGuide = this.placesToGuide.map(place => place.trim())
+    next()
 })
 
 guideSchema.virtual('qualifications', {
@@ -51,6 +73,15 @@ guideSchema.virtual('reviews', {
     localField: '_id',
     foreignField: 'guide'
 })
+
+guideSchema.methods.toJSON = function() {
+    const guide = this
+    const guideObject = guide.toObject()
+    delete guideObject.introVideo
+    delete guideObject.gallery
+
+    return guideObject
+}
 
 const Guides = mongoose.model('guides', guideSchema)
 

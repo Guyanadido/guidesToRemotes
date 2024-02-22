@@ -5,7 +5,9 @@ const multer = require('multer')
 const sharp = require('sharp')
 const Filter = require('bad-words')
 
-const blogSearchQuery = require('../../utils/blogSearchQuery')
+const {image, gallery} = require('../../utils/imageAndGallery')
+const {blogSearchQuery} = require('../../utils/SearchQueries')
+
 const Blog = require('../../models/blog_related/blog')
 const auth = require('../../middleware/auth')
 
@@ -103,22 +105,8 @@ router.delete('/blogs', auth, async (req, res) => {
     }
 })
 
-const featuredImg = multer({
-    limits: {
-        fileSize: 20000000
-    },
-
-    fileFilter(req, file, cd) {
-        if (!file.originalname.match(/\.(jpg||jpej||png)$/)) {
-            return cd(new Error('upload an image'))
-        }
-
-        cd(undefined, true)
-    }
-})
-
 //upload a featured image
-router.post('/blog/featuredImg/:id', auth, featuredImg.single('featuredImg'), async (req, res) => {
+router.post('/blog/featuredImg/:id', auth, image.single('featuredImg'), async (req, res) => {
     try {
         const blog = await Blog.findOne({ _id: req.params.id, guide: req.user._id })
         if (!blog) {
@@ -134,24 +122,6 @@ router.post('/blog/featuredImg/:id', auth, featuredImg.single('featuredImg'), as
     }
 })
 
-const gallery = multer({
-    limits: {
-        fileSize: 20000000,
-    },
-
-    fileFilter(req, file, cb) {
-        if ((file.size > 20000000)) {
-            return cb(new Error('size limit passed'))
-        }
-
-        if (!file.mimetype.startsWith('image/') && !file.mimetype.startsWith('video/')) {
-            return cb(new Error('upload a video or image'))
-        }
-
-        cb(undefined, true)
-    }
-})
-
 //upload a gallery 
 router.post('/blog/gallery/:id', auth, gallery.array('gallery', 5), async (req, res) => {
     try {
@@ -160,7 +130,7 @@ router.post('/blog/gallery/:id', auth, gallery.array('gallery', 5), async (req, 
             return res.status(404).send({'error':'blog not found'})
         }
 
-        const gallary = req.files.map(async (file) => {
+        const gallery = req.files.map(async (file) => {
             if (file.mimetype.startsWith('image/')) {
                 return await sharp(file.buffer).png().toBuffer()
             } else if (file.mimetype.startsWith('video/')) {
@@ -168,14 +138,14 @@ router.post('/blog/gallery/:id', auth, gallery.array('gallery', 5), async (req, 
             } 
         })
 
-        const formattedGallery = await Promise.all(gallary)
+        const formattedGallery = await Promise.all(gallery)
 
         formattedGallery.forEach(async (item) => {
             await blog.gallery.push({item})
         })
 
         await blog.save()
-        res.send(blog)
+        res.send(blog.gallery)
     } catch (e) {
         res.status(500).send()
     }

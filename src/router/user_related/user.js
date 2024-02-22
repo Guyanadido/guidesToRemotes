@@ -2,14 +2,14 @@ const express = require('express')
 const User = require('../../models/user_related/user')
 const router = new express.Router()
 const auth = require('../../middleware/auth')
-const checkValidation = require('../../utils/validate')
+const checkValidation = require('../../utils/userValidate')
 
-const multer = require('multer')
+const {image} = require('../../utils/imageAndGallery')
 const sharp = require('sharp')
 //create a new user
 router.post('/user', async (req, res) => {
     const user = new User(req.body)
-
+    user.role = 'tourist'
     try {
         const token = await user.generateAuthToken()
         res.status(201).send({user, token})
@@ -84,21 +84,7 @@ router.delete('/user/me', auth, async(req, res) => {
     }
 })
 
-const avator = multer({
-    limits: {
-        fileSize:1000000
-    },
-
-    fileFilter(req, file, cd) {
-        if(!file.originalname.match(/\.(jpg||jpej||png)$/)) {
-            return cd(new Error('upload an image'))
-        }
-
-        cd(undefined, true)
-    }
-})
-
-router.post('/user/avator/me', auth, avator.single('avator'), async (req, res) => {
+router.post('/user/avator/me', auth, image.single('avator'), async (req, res) => {
     try {
         if(!req.file) {
             throw new Error('no image provided')

@@ -15,16 +15,11 @@ const locationSchema = mongoose.Schema({
     images: [{
         image: {
             type: Buffer,
-            required: true
         }
     }],
-    tourTypes: [{
-        tourType: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'tourTypes',
-            required: true,
-        }
-    }],
+    tourTypes: {
+            type: [{type: mongoose.Schema.Types.ObjectId, ref:'tourTypes'}]
+        },
     latitude: {
         type: mongoose.Types.Decimal128,
         required: true,
@@ -34,6 +29,18 @@ const locationSchema = mongoose.Schema({
         type: mongoose.Types.Decimal128,
         required: true,
         trim: true
+    }
+})
+
+locationSchema.path('images').validate(async function(value) {
+    if(value.length <= 0 || value.length > 5) {
+        throw new Error('must provide at most 5 place images')
+    }
+})
+
+locationSchema.path('tourTypes').validate(async function(value) {
+    if(value.length <= 0) {
+        throw new Error('require at least one tour type a place is associated to')
     }
 })
 

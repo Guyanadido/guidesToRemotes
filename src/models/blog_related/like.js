@@ -6,10 +6,9 @@ const likesSchema = mongoose.Schema({
         required: true,
         ref: 'user'
     },
-    blog: {
+    liked: {
         type: mongoose.Schema.Types.ObjectId,
         required: true,
-        ref: 'blog'
     },
 }, {
     timestamps: true

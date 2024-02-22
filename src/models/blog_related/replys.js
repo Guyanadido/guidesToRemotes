@@ -1,10 +1,9 @@
 const mongoose = require('mongoose')
 
-const commentSchema = mongoose.Schema({
-    blog: {
+const replysSchema = mongoose.Schema({
+    mainComment: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'blog',
-        required: true
+        ref: 'comment'
     },
     commentor: {
         type: mongoose.Schema.Types.ObjectId,
@@ -16,15 +15,15 @@ const commentSchema = mongoose.Schema({
         required: true,
         trim: true,
         maxLength: 10000,
-    },
+    }, 
     likes: {
         type: Number,
-        default: 0,
+        default:0
     }
 }, {
     timestamps: true
 })
 
-const Comment = mongoose.model('comment', commentSchema)
+const Reply = mongoose.model('reply' ,replysSchema)
+module.exports = Reply
 
-module.exports = Comment

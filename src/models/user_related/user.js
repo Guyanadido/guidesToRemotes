@@ -2,8 +2,9 @@ const mongoose = require('mongoose')
 const validator = require('validator')
 const bcrypt = require('bcryptjs')
 const jwt = require('jsonwebtoken')
-const languageSchema = require('../site_related/language')
 const Blog = require('../blog_related/blog')
+const Guide = require('./guide')
+const Tourist = require('./tourist')
 
 const userSchema = mongoose.Schema({
     firstName: {
@@ -39,7 +40,7 @@ const userSchema = mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['tourist', 'guide'],
+        enum: ['tourist', 'guide', 'admin'],
         default: 'tourist',
     },
     avator: {
@@ -91,6 +92,18 @@ userSchema.pre('remove', async function(next) {
 
     next()
 })
+
+userSchema.pre('remove', async function(next) {
+    const user = this
+
+    if(user.role === 'guide') {
+        await Guide.findOneAndDelete({user: user._id})
+    }  else {
+        await Tourist.findOneAndDelete({user: user._id})
+    }
+    next()
+})
+
 
 userSchema.methods.generateAuthToken = async function() {
     const user = this

@@ -28,4 +28,27 @@ const blogSearchQuery = ({guide, title, excerpt, catagories, placesFeatured, tag
     return query
 }
 
-module.exports = blogSearchQuery
+const guideSearchQuery = ({places, tourTypes}) => {
+    const query = {
+        places: [],
+        tourTypes: []
+    }
+    console.log(places)
+    console.log(tourTypes)
+    if(places) {
+        places = JSON.parse(places)
+        
+    }
+
+    if(tourTypes) {
+        tourTypes = JSON.parse(tourTypes)
+        tourTypes.forEach(type => query.tourTypes.push(type))
+    }
+
+    return query 
+}
+ 
+module.exports = {
+    blogSearchQuery,
+    guideSearchQuery,
+}
