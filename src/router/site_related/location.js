@@ -9,36 +9,56 @@ const auth = require('../../middleware/auth')
 const validate = require('../../utils/updateValidation')
 
 //create new location
-router.post('/Location', auth, image.array('gallery'), async(req, res) => {
+router.post('/Location', auth, async(req, res) => {
+    const location = new Location({...req.body})
     try {
+        await location.save() 
+        res.send(location)
+    } catch (e) { 
+        console.log(e)
+        res.status(500).send(e.message)
+    }
+})
+
+//upload images
+router.post('/Location/image/:id', auth, image.array('gallery'), async(req, res) => {
+    try { 
+        const location = await Location.findById(req.params.id)
+        if(!location) {
+            return res.status(400).sned({'error':'not found'})
+        }
         const sharpImages = req.files.map(async (file) => {
             return await sharp(file.buffer).png().toBuffer()
         })
-        const images = await Promise(sharpImages)
-        const location = new Location({...req.body})
-        images.forEach(image =>location.images.concat({image}))
+        const images = await Promise.all(sharpImages)
+        images.forEach(image => location.images.push({image}))
         await location.save()
         res.send(location)
     } catch (e) {
-        res.status(500).send()
+        res.status(500).send(e.message)
     }
-})
+}) 
 
 //get multiple locations
 // /Locations?sortBy=createdAt:desc?&page=1&limit=10
 router.get('/Locations', async(req, res) => {
     try {
-        const page = req.body.page || 1
-        const limit = req.body.limit || 10
+        const page = req.query.page || 1
+        const limit = req.query.limit || 10
         const skip = (page - 1) * limit
 
         const sortBy = {}
         if(req.body.sortBy) {
-            const [field, order] = req.body.sortBy.split(':')
+            const [field, order] = req.query.sortBy.split(':')
             sortBy[field] = order === 'desc' ? -1 : 1
         }
 
-        const locaions = await Location.find({})
+        const userSearch = req.query.name ? req.query.name : ''
+        const sanitizedQuery = userSearch.trim().toLowerCase()
+        const searchQuery = {
+            name: {$regex: new RegExp(sanitizedQuery, 'i')}
+        }
+        const locaions = await Location.find(searchQuery)
             .sort(sortBy)
             .limit(limit)
             .skip(skip)
@@ -55,9 +75,9 @@ router.patch('/Location/image/:id', auth, image.single('image'), async(req, res)
         if(!location) {
             return res.status(400).send({'error':'not found'})
         }
-        image = await sharp(req.file).png().toBuffer()
+        const image = await sharp(req.file.buffer).png().toBuffer()
         location.images.push({image})
-        await location.save()
+        await location.save() 
         res.send(location)
     } catch (e) {
         res.status(500).send(e.message)
@@ -68,7 +88,7 @@ router.patch('/Location/image/:id', auth, image.single('image'), async(req, res)
 //edit Location
 router.patch('/Location/:id', auth, async(req, res) => {
     if(!validate(req.body, ['name', 'description', 'tourTypes', 'latitude', 'longitude'])) {
-        return res.status(401).send()
+        return res.status(400).send({'error':'invalid updates'})
     }
 
     try {
@@ -110,5 +130,7 @@ router.delete('/Location/:id', auth, async(req, res) => {
         res.send(location)
     } catch (e) {
         res.status(500).send(e.message)
-    }
+    } 
 })
+
+module.exports = router

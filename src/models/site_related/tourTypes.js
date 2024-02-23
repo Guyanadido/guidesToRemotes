@@ -22,12 +22,9 @@ const tourTypesSchema = mongoose.Schema({
     image: {
         type: Buffer,
     },
-    locations: [{
-        location: {
-            type: String,
-            trim: true,
-        }
-    }]
+    relatedLocations: {
+        type: [{type: String, ref: 'location'}]
+    }
 }, {
     timestamps: true
 })

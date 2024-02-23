@@ -32,8 +32,16 @@ const locationSchema = mongoose.Schema({
     }
 })
 
+locationSchema.methods.toJSON = function() {
+    const location = this
+    const locationObject = location.toObject()
+
+    delete locationObject.images
+    return locationObject
+}
+
 locationSchema.path('images').validate(async function(value) {
-    if(value.length <= 0 || value.length > 5) {
+    if(value.length > 5) {
         throw new Error('must provide at most 5 place images')
     }
 })
@@ -44,5 +52,5 @@ locationSchema.path('tourTypes').validate(async function(value) {
     }
 })
 
-const Location = mongoose.Schema('location', locationSchema)
+const Location = mongoose.model('location', locationSchema)
 module.exports = Location
